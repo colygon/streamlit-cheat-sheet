@@ -16,6 +16,7 @@ import base64
 import os
 from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
+from crewai_tools import CodeInterpreterTool
 
 # Initial page config
 st.set_page_config(
@@ -33,6 +34,12 @@ def get_llm():
         return None
     return ChatOpenAI(model="gpt-4", temperature=0.7)
 
+# Initialize CodeInterpreterTool
+@st.cache_resource
+def get_code_interpreter_tool():
+    """Initialize the CodeInterpreterTool for executing code examples"""
+    return CodeInterpreterTool()
+
 # Define CrewAI Agents
 @st.cache_resource
 def create_documentation_agents():
@@ -41,6 +48,9 @@ def create_documentation_agents():
 
     if llm is None:
         return None
+
+    # Initialize CodeInterpreterTool for live code execution
+    code_tool = get_code_interpreter_tool()
 
     # Agent 1: Documentation Analyzer
     doc_analyzer = Agent(
@@ -55,15 +65,17 @@ def create_documentation_agents():
         allow_delegation=False
     )
 
-    # Agent 2: Code Example Generator
+    # Agent 2: Code Example Generator with CodeInterpreterTool
     code_generator = Agent(
         role="Code Example Generator",
-        goal="Generate clear, practical code examples for Streamlit features and components",
+        goal="Generate clear, practical code examples for Streamlit features and components, and execute them to verify they work",
         backstory="""You are a skilled developer and educator who specializes in creating
         clean, well-commented code examples. You understand how developers learn best and
         create examples that are both educational and practical. Your code follows best
-        practices and demonstrates real-world usage patterns.""",
+        practices and demonstrates real-world usage patterns. You can execute code examples
+        to ensure they work correctly before sharing them.""",
         llm=llm,
+        tools=[code_tool],
         verbose=True,
         allow_delegation=False
     )

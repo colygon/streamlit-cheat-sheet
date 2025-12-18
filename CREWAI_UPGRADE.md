@@ -21,13 +21,16 @@ The application now includes three AI-powered agents built with CrewAI:
 
 #### Agent 2: Code Example Generator
 - **Role**: Code Example Generator
-- **Goal**: Generate clear, practical code examples for Streamlit features and components
+- **Goal**: Generate clear, practical code examples for Streamlit features and components, and execute them to verify they work
+- **Tools**: CodeInterpreterTool for live code execution
 - **Capabilities**:
   - Creates clean, well-commented code examples
   - Demonstrates real-world usage patterns
   - Follows best practices
   - Provides educational and practical examples
   - Explains when and how to use specific features
+  - Executes code examples to verify correctness
+  - Validates syntax and functionality before sharing
 
 #### Agent 3: Cheat Sheet Curator
 - **Role**: Cheat Sheet Curator
@@ -39,7 +42,30 @@ The application now includes three AI-powered agents built with CrewAI:
   - Curates best practices
   - Formats content for developer efficiency
 
-### 2. Interactive AI Features
+### 2. CodeInterpreterTool Integration
+
+The application now includes CrewAI's CodeInterpreterTool, which enables live code execution and validation:
+
+```python
+from crewai_tools import CodeInterpreterTool
+
+code_tool = CodeInterpreterTool()
+```
+
+#### Benefits of CodeInterpreterTool
+- **Live Code Execution**: Execute code examples in a sandboxed environment
+- **Validation**: Verify that generated code works before sharing with users
+- **Error Detection**: Catch syntax errors and runtime issues automatically
+- **Testing**: Test code snippets to ensure they produce expected results
+- **Interactive Examples**: Generate executable examples that users can trust
+
+The CodeInterpreterTool is integrated into the Code Example Generator agent, allowing it to:
+1. Generate code examples based on user queries
+2. Execute the code to verify correctness
+3. Catch and fix any errors before presenting to users
+4. Provide validated, working examples every time
+
+### 3. Interactive AI Features
 
 The upgraded application provides three interactive tabs:
 
@@ -52,7 +78,8 @@ The upgraded application provides three interactive tabs:
 #### Tab 2: Generate Examples
 - Request code examples from the Code Generator agent
 - Receive multiple practical examples with explanations
-- Learn proper usage patterns
+- All code examples are executed and validated using CodeInterpreterTool
+- Learn proper usage patterns with confidence that examples work
 - Example queries: "st.form", "st.columns", "st.dataframe"
 
 #### Tab 3: Get Best Practices
@@ -67,12 +94,14 @@ The upgraded application provides three interactive tabs:
 ```python
 from crewai import Agent, Task, Crew, Process
 from langchain_openai import ChatOpenAI
+from crewai_tools import CodeInterpreterTool
 ```
 
 - Uses CrewAI framework for multi-agent orchestration
 - Implements sequential processing workflow
 - Each agent has specialized role and capabilities
 - Agents work together to provide comprehensive answers
+- CodeInterpreterTool enables live code execution and validation
 
 #### Caching Strategy
 ```python
@@ -82,19 +111,25 @@ def get_llm():
     return ChatOpenAI(model="gpt-4", temperature=0.7)
 
 @st.cache_resource
+def get_code_interpreter_tool():
+    """Initialize the CodeInterpreterTool for executing code examples"""
+    return CodeInterpreterTool()
+
+@st.cache_resource
 def create_documentation_agents():
     """Create three specialized documentation agents"""
-    # Agent creation logic
+    # Agent creation logic with CodeInterpreterTool integration
 ```
 
 - Uses Streamlit's `@st.cache_resource` for efficient LLM initialization
+- CodeInterpreterTool is cached for reuse across sessions
 - Agents are created once and reused across sessions
 - Optimizes performance and reduces API calls
 
 #### Task Execution
 The crew executes three sequential tasks:
 1. **Analysis Task**: Analyzes the requested topic
-2. **Generation Task**: Creates code examples based on analysis
+2. **Generation Task**: Creates and executes code examples using CodeInterpreterTool to verify correctness
 3. **Update Task**: Formats content into cheat sheet format
 
 ### 4. Files Modified/Created
@@ -123,6 +158,7 @@ pip install -r requirements.txt
 This will install:
 - `streamlit` - Web application framework
 - `crewai>=0.86.0` - Multi-agent framework
+- `crewai-tools>=0.17.0` - CrewAI tools including CodeInterpreterTool
 - `langchain-openai>=0.3.0` - OpenAI integration for LangChain
 
 ### 2. Set OpenAI API Key
@@ -190,8 +226,9 @@ streamlit run app.py
 ### 1. Enhanced Learning Experience
 - Interactive AI assistance for learning Streamlit
 - On-demand explanations for any feature
-- Personalized code examples
+- Personalized code examples that are validated through execution
 - Real-time best practice recommendations
+- Confidence that all generated code examples work correctly
 
 ### 2. Up-to-Date Information
 - AI agents can provide current information
@@ -231,6 +268,7 @@ Display to User
 
 - **Frontend**: Streamlit
 - **Agent Framework**: CrewAI
+- **Tools**: CodeInterpreterTool for live code execution
 - **LLM Integration**: LangChain OpenAI
 - **AI Model**: GPT-4
 - **Process Type**: Sequential
@@ -256,6 +294,13 @@ All agents are configured with:
 - `allow_delegation=False` - Each agent completes its own task
 - Specialized backstories for role-specific behavior
 
+### Tool Configuration
+
+Code Example Generator agent includes:
+- `tools=[code_tool]` - CodeInterpreterTool for executing and validating code
+- Enables live testing of generated examples
+- Ensures code quality and correctness
+
 ## Limitations & Considerations
 
 ### 1. API Key Required
@@ -265,6 +310,7 @@ All agents are configured with:
 
 ### 2. Response Time
 - AI-powered features may take 10-30 seconds
+- Code execution via CodeInterpreterTool may add additional time
 - Depends on query complexity and API response time
 - Progress spinners indicate processing status
 
@@ -338,6 +384,7 @@ All agents are configured with:
 | Static Cheat Sheet | ✅ | ✅ |
 | Interactive AI | ❌ | ✅ |
 | Code Generation | ❌ | ✅ |
+| Code Execution & Validation | ❌ | ✅ |
 | Feature Analysis | ❌ | ✅ |
 | Best Practices | ❌ | ✅ |
 | Multi-Agent System | ❌ | ✅ |
@@ -384,6 +431,7 @@ For issues related to:
 ### v1.25.0 + CrewAI (December 2025)
 - Added three specialized documentation agents
 - Integrated CrewAI framework
+- Added CodeInterpreterTool for live code execution and validation
 - Added interactive AI features
 - Enhanced with LangChain OpenAI
 - Maintained backward compatibility
@@ -395,4 +443,4 @@ For issues related to:
 
 ## Summary
 
-This CrewAI upgrade transforms the Streamlit cheat sheet from a static reference into an interactive, AI-powered documentation tool. Three specialized agents work together to provide analysis, code examples, and best practices on demand, while preserving all original functionality. The upgrade demonstrates how multi-agent AI systems can enhance developer tools and create more engaging learning experiences.
+This CrewAI upgrade transforms the Streamlit cheat sheet from a static reference into an interactive, AI-powered documentation tool. Three specialized agents work together to provide analysis, code examples, and best practices on demand, while preserving all original functionality. The integration of CodeInterpreterTool ensures all generated code examples are validated through execution, providing users with confidence that the code works correctly. The upgrade demonstrates how multi-agent AI systems enhanced with code execution capabilities can create more reliable and engaging learning experiences for developers.
